@@ -1,0 +1,11 @@
+{
+  "name": "leek-build-apks",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/dushaobindoudou/leek-build-apks.git",
+  "author": "dushaobin <dushaobin@we.com>",
+  "license": "MIT",
+  "dependencies": {
+    "shelljs": "^0.8.2"
+  }
+}
