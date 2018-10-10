@@ -24,7 +24,8 @@ react native init的逻辑是
 
 4. 每个react-native 对应的react 版本是不同的
 
-
+
+
 1. 初始化一次 react-native 最新版本的代码
 2. 获取react-native-patch的测试代码
 3. 修改package.json指定的react-native 版本和 react 版本
