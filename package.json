@@ -1,11 +1,9 @@
 {
-  "name": "leek-build-apks",
+  "name": "leek-auto-build",
   "version": "1.0.0",
+  "description": "自动构建rn测试包",
   "main": "index.js",
   "repository": "https://github.com/dushaobindoudou/leek-build-apks.git",
   "author": "dushaobin <dushaobin@we.com>",
-  "license": "MIT",
-  "dependencies": {
-    "shelljs": "^0.8.2"
-  }
+  "license": "MIT"
 }
