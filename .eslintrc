@@ -1,0 +1,17 @@
+{
+    "extends": "airbnb-base/legacy",
+    "env": { 
+        "es6": true,
+        "node": true
+    },
+    "rules": {
+        "indent": ["error", 4],
+        "comma-dangle": ["error", {
+            "arrays": "never",
+            "objects": "always",
+            "imports": "never",
+            "exports": "never",
+            "functions": "ignore"
+        }]
+    }
+}
