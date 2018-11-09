@@ -68,6 +68,84 @@ todo:
 
 最终考虑还是以cli项目通过npm进行发布管理。避免很多不必要的麻烦
 
+## 使用说明
+
+
+### 配置环境
+首先需要配置打包环境
+
+需要安装 node js
+
+#### android
+
+1. 安装java
+2. 安装android sdk
+3. 安装gradle
+4. 安照官方配置
+
+
+#### ios
+
+todo
+
+
+
+### 安装工具
+npm install -g leek-auto-build 
+
+
+### 配置打包参数
+
+默认打包的配置文件为： leek-auto-build.conf
+
+切换到 配置文件所在目录
+
+运行命令 lab
+
+```
+lab -r continue // 接着上一次未打完的进度继续打包
+lab -r rebuild // 重新构建上一次打包
+lab -r error // 打包 上一次失败的包
+```
+
+配置demo:
+
+```
+{
+    "appName": "FunApp", // 生成的android 项目名称
+    "reactNativeRange": ">=0.45.2", // 要打包的react native 版本范围
+    "dist": "./dist/", // 打包生成的包放置的位置
+    "taskLogPath": "./dist/task.log", // 打包任务log存放的路径
+    "platform": "android", // 打包平台
+    "beforeBuildDir": "./beforeBuildDir", // 打包之前需要执行的脚本
+    "afterBuildDir": "./afterBuildDir", // 打包之后需要执行的脚本
+    "dependencies": { // 在生成App的时候需要加入的依赖
+        "react-native-tinker": "latest"
+    }
+}
+
+````
+
+打包之前执行脚本的配置：
+
+文件名为针对哪些版本进行执行，多个限制使用空格分开 例如: >=0.45.1 <=0.57.2.js 
+
+当执行脚本的时候 会把项目的根目录作为参数传给脚本
+
+执行脚本Demo:
+
+```
+#!/usr/bin/env node
+
+const path = require('path');
+const shelljs = require('shelljs');
+console.log('\n\n\n\n\n\n');
+const projectRoot = process.argv[process.argv.length - 1];
+shelljs.exec(`cp -f ${path.join(__dirname, './assets/build.gradle')} ${projectRoot}/android/build.gradle`);
+console.log('重置 build.gradle 完成');
+console.log('\n\n\n\n\n\n');
+````
+
 
 
 ## 问题

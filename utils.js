@@ -28,7 +28,21 @@ const buildLog = {
     success: {},
 };
 
+/**
+ * 读取构建日志
+ * @param {string} dist 构建日志的路径
+ */
+function readBuildLog(dist) {
+    if (!fs.existsSync(dist)) {
+        return null;
+    }
+    return JSON.parse(fs.readFileSync(dist, { encoding: 'utf8', }));
+}
 
+/**
+ * 保存构建任务
+ * @param {string} dist 保存任务路径
+ */
 function writeBuildLog(dist) {
     if (!fs.existsSync(dist)) {
         fse.mkdirpSync(path.dirname(dist));
@@ -50,7 +64,14 @@ function initTask(versions, taskLogPath) {
     }
     writeBuildLog(taskLogPath);
 }
-
+/**
+ * 更新打包任务log
+ * @param {string} taskIdx 当前的任务id
+ * @param {string} v 当前构建的react native 版本号
+ * @param {string} status 当前任务的状态
+ * @param {string} taskLogPath 保存任务的路径
+ * @param {object} res 任务附件信息
+ */
 function updateTask(taskIdx, v, status, taskLogPath, res) {
     if (taskIdx === undefined || !v) {
         return;
@@ -89,10 +110,10 @@ const utils = {
      *
      * 过滤可用版本
      *
-     * @param string rule 规则
-     * @param array versions 要过滤的版本列表
+     * @param {string} rule 规则
+     * @param {array} versions 要过滤的版本列表
      *
-     * @return array
+     * @return {array}
      *
      */
     filterVersion(rule, versions) {
@@ -112,7 +133,7 @@ const utils = {
     /**
      * 检查adb是否安装，如果没有安装则退出项目
      *
-     * @return bool
+     * @return {bool}
      */
     checkAdb() {
         const std = shelljs.exec('adb', { silent: true, });
@@ -122,16 +143,10 @@ const utils = {
         return false;
     },
     /**
-     * 构建记录
-     */
-    buildLog() {
-
-    },
-    /**
      * 获取当前目录下所有的apk
-     * @param string buildDist 要查找的目录
-     * @param string type 文件类型
-     * @return array 文件列表
+     * @param {string} buildDist 要查找的目录
+     * @param {string} type 文件类型
+     * @return {array} 文件列表
      */
     filterApk(buildDist, type) {
         if (!buildDist) {
@@ -145,7 +160,7 @@ const utils = {
     },
     /**
      * 检查react native cli是否安装
-     * @return bool
+     * @return {bool}
      */
     checkRNCli() {
         const std = shelljs.exec('react-native -v');
@@ -164,7 +179,7 @@ const utils = {
     },
     /**
      * 初始化app
-     * @return bool
+     * @return {bool}
      */
     checkGradle() {
         const std = shelljs.exec('adb', { silent: true, });
@@ -175,7 +190,8 @@ const utils = {
     },
     /**
      * 获取project package.json
-     * @return json or null
+     * @param {string} projectName 项目名
+     * @return {object}
      */
     getProjectPackage(projectName) {
         if (!projectName) {
@@ -185,6 +201,7 @@ const utils = {
             // readJSON
             // const std = shelljs.exec(path.join(__dirname,
             // `.${path.sep}project${path.sep}${projectName}${path.sep}package.json`));
+            // eslint-disable-next-line global-require
             const pkgJSON = require(`./project/${projectName}/package.json`);
             return pkgJSON;
         } catch (e) {
@@ -193,6 +210,7 @@ const utils = {
     },
     /**
      * 初始化项目
+     * @param {string} rnVersion react native 版本
      */
     initProject(rnVersion) {
         const confInfo = this.getConfigInfo();
@@ -216,9 +234,9 @@ const utils = {
     },
     /**
      * 安装指定版本的依赖
-     * @param string projectName 项目名称
-     * @param string rnVersion rn版本
-     * @return bool
+     * @param {string} projectName 项目名称
+     * @param {string} rnVersion rn版本
+     * @return {bool}
      */
     installDep(projectName, rnVersion) {
         if (!projectName || !rnVersion) {
@@ -227,7 +245,7 @@ const utils = {
         const confInfo = this.getConfigInfo();
         if (!confInfo) {
             console.log('获取配置信息失败，请在当前目录创建配置文件');
-            return;
+            return null;
         }
         shelljs.cd(execDir);
         // get project package.json
@@ -250,6 +268,7 @@ const utils = {
     },
     /**
      * 获取构建之前执行的脚本
+     * @return {object}
      */
     getBeforeBuildScripts() {
         const confInfo = this.getConfigInfo();
@@ -322,7 +341,7 @@ const utils = {
     },
     /**
      * 获取当前配置文件的路径
-     * @return string
+     * @return {string}
      */
     getConfPath() {
         const currDir = execDir;
@@ -331,7 +350,7 @@ const utils = {
     /**
      * 检查配置文件
      * 配置文件名称是固定值，leek-auto-build.conf
-     *
+     * @return {bool}
      */
     checkConfig() {
         const configPath = this.getConfPath();
@@ -341,7 +360,16 @@ const utils = {
         return true;
     },
     /**
+     * 获取默认的任务
+     * @return {object}
+     */
+    getDefaultConf() {
+        // eslint-disable-next-line global-require
+        return require('./leek-auto-build-conf-default.json');
+    },
+    /**
      * 获取项目配置信息
+     * return {object}
      */
     getConfigInfo() {
         if (!this.checkConfig()) {
@@ -349,7 +377,9 @@ const utils = {
             return null;
         }
         const configPath = this.getConfPath();
-        return JSON.parse(fs.readFileSync(configPath, { encoding: 'utf8', }));
+        const customConf = JSON.parse(fs.readFileSync(configPath, { encoding: 'utf8', }));
+        const defaultConf = this.getDefaultConf();
+        return Object.assign({}, defaultConf, customConf);
     },
     /**
      * 完成构建
@@ -393,13 +423,12 @@ const utils = {
         updateTask(idx, rnVersion, 'success', taskLogPath, {
             distPath: distFile,
         });
-
         console.log('完成构建');
     },
     /**
      * 进行构建
      */
-    run() {
+    run(startWith) {
         const confInfo = this.getConfigInfo();
         /**
          * 检查环境
@@ -413,8 +442,9 @@ const utils = {
             return;
         }
         console.log('获取要构建的react native版本...');
+        let exitLog = null;
         const rnVersions = utils.getVersionList('react-native');
-        const avlVers = utils.filterVersion(confInfo.reactNativeRange, rnVersions);
+        let avlVers = utils.filterVersion(confInfo.reactNativeRange, rnVersions);
         if (avlVers.length < 1) {
             console.log('没有找到匹配的打包版本');
             return;
@@ -429,29 +459,38 @@ const utils = {
         }
         const projectName = confInfo.appName;
         const taskLogPath = path.join(execDir, confInfo.taskLogPath);
-        initTask(avlVers, taskLogPath);
+        if (!startWith) {
+            initTask(avlVers, taskLogPath);
+        } else {
+            exitLog = readBuildLog(taskLogPath);
+            if (startWith === 'error') {
+                avlVers = Object.keys(exitLog.error);
+            } else if (startWith === 'continue') {
+                avlVers = exitLog.taskList;
+            } else if (startWith === 'rebuild') {
+                avlVers = Object.keys(exitLog.task);
+            }
+        }
         console.log('版本列表：', avlVers, avlVers.length);
         const beforeBuildConf = this.getBeforeBuildScripts();
         avlVers.forEach((v, i) => {
-            // todo: remove
-            // if (v !== '0.57.0') {
-            //     return;
-            // }
             console.log('开始构建react native版本：', v);
+            // 跳过已经打包的索引
+            if (startWith === 'continue' && i < exitLog.currIndex) {
+                return;
+            }
             updateTask(i, v, null, taskLogPath);
             try {
                 utils.initProject(v);
                 utils.installDep(projectName, v);
-
                 utils.startBuild(projectName, confInfo.platform, v, beforeBuildConf);
                 utils.finishBuild(projectName, confInfo.platform, v, i, taskLogPath);
                 updateTask(i, v, 'success', taskLogPath, {
                     msg: '构建成功',
                 });
             } catch (e) {
-                console.log('捕获当前错误');
+                console.log('构建错误:', e);
                 updateTask(i, v, 'error', taskLogPath, { msg: e.msg, });
-                // throw e;
             }
         });
     },

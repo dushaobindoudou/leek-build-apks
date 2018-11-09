@@ -1,6 +1,6 @@
 {
     "appName": "FunApp",
-    "reactNativeRange": ">=0.45.2",
+    "reactNativeRange": ">=0.45.1",
     "dist": "./dist/",
     "taskLogPath": "./dist/task.log",
     "platform": "android",
