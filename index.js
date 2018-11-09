@@ -13,7 +13,6 @@
 
 const utils = require('./utils');
 
-const projectName = 'FunApp';
 const confInfo = utils.getConfigInfo();
 
 /**

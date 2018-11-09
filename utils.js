@@ -283,9 +283,8 @@ const utils = {
         if (!buildConf || !projectName || !rnVersion) {
             return;
         }
-        console.log(buildConf);
         Object.keys(buildConf).forEach((rule) => {
-            if (!semver.satisfies(rnVersion, rule) || buildConf[rule]) {
+            if (!semver.satisfies(rnVersion, rule) || !buildConf[rule]) {
                 return;
             }
             const projectRoot = path.join(__dirname, `./project/${projectName}`);
@@ -293,6 +292,7 @@ const utils = {
             const spath = buildConf[rule].replace(/(<|>| |=)/ig, ($1) => {
                 return '\\' + $1;
             });
+            console.log('执行脚本：', spath);
             const std = shelljs.exec(`${spath} ${projectRoot}`);
             if (std.code > 0) {
                 throw new Error(std.stderr);
@@ -408,7 +408,10 @@ const utils = {
             console.log('获取配置信息失败，请在当前目录创建配置文件');
             return;
         }
-        utils.checkAdb();
+        if (!utils.checkAdb()) {
+            console.log('adb 没有安装');
+            return;
+        }
         console.log('获取要构建的react native版本...');
         const rnVersions = utils.getVersionList('react-native');
         const avlVers = utils.filterVersion(confInfo.reactNativeRange, rnVersions);

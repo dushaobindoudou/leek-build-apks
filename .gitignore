@@ -1,7 +1,4 @@
 node_modules/
 .gradle/
 dist/
-project/FunApp/node_modules/
-project/FunApp/anroid/.gradle/
-project/FunApp/anroid/build/
-project/FunApp/anroid/app/build/
+project/*
