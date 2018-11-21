@@ -6,6 +6,7 @@
     "platform": "android",
     "beforeBuildDir": "./beforeBuildDir",
     "afterBuildDir": "./afterBuildDir",
+    "websocketServer": "http://127.0.0.1:3001",
     "dependencies": {
         "react-native-tinker": "latest"
     }

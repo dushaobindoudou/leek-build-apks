@@ -12,6 +12,7 @@
 
 
 const utils = require('./utils');
+const autoRun = require('./autoRun');
 
 const confInfo = utils.getConfigInfo();
 
@@ -23,7 +24,23 @@ if (!confInfo) {
     return;
 }
 
-utils.run();
+// autoRun.init(() => {
+//     utils.run();
+// });
+
+// utils.startEmulatorAsync('Nexus_5X_API_26');
+
+// utils.installApk('emulator-5554', '/Users/rrd/rrd-project/rrdfinance/finance/app/build/outputs/apk/prod/debug/app-prod-debug.apk');
+
+// utils.uninstallApk('emulator-5554', 'com.renrendai.finance');
+
+// console.log(utils.openActivity('emulator-5554', 'com.renrendai.finance/.activity.SplashActivity'));
+
+// utils.stopApp('emulator-5554', 'com.renrendai.finance');
+
+// android.permission.READ_PHONE_STATE
+
+// utils.grantPermission('emulator-5554', 'com.renrendai.finance', 'android.permission.READ_PHONE_STATE');
 
 // console.log(utils.getBeforeBuildScripts());
 

@@ -86,6 +86,9 @@ function updateTask(taskIdx, v, status, taskLogPath, res) {
 }
 
 const utils = {
+    event: {
+        buildSucc: [],
+    },
     /**
      * 从npm获取相关包的版本列表
      * @param {string} packageName 包名
@@ -178,11 +181,11 @@ const utils = {
         }
     },
     /**
-     * 初始化app
+     * 检查gradle是否安装
      * @return {bool}
      */
     checkGradle() {
-        const std = shelljs.exec('adb', { silent: true, });
+        const std = shelljs.exec('gradle', { silent: true, });
         if (std.stdout && std.stdout.indexOf('Gradle') > -1) {
             return true;
         }
@@ -425,6 +428,11 @@ const utils = {
         });
         console.log('完成构建');
     },
+    getBuildLog() {
+        const confInfo = this.getConfigInfo();
+        const taskLogPath = path.join(execDir, confInfo.taskLogPath);
+        return readBuildLog(taskLogPath);
+    },
     /**
      * 进行构建
      */
@@ -488,12 +496,225 @@ const utils = {
                 updateTask(i, v, 'success', taskLogPath, {
                     msg: '构建成功',
                 });
+                this.execEventHandler('buildSucc', {
+                    rnVersion: v,
+                    projectName,
+                });
             } catch (e) {
                 console.log('构建错误:', e);
                 updateTask(i, v, 'error', taskLogPath, { msg: e.msg, });
             }
         });
     },
+    /**
+     * 执行事件
+     * @param {string} type 事件类型
+     */
+    execEventHandler(type, ...args) {
+        if (type && this.event[type]) {
+            this.event[type].forEach((v) => {
+                if (v) {
+                    v(...args);
+                }
+            });
+        }
+    },
+    /**
+     * 添加执行事件类型的回调函数
+     * @param {string} type 事件类型
+     * @param {function} handler 回调函数
+     */
+    addListener(type, handler) {
+        if (!type || !handler || !this.event[type]) {
+            return;
+        }
+        this.event[type].push(handler);
+    },
+    /**
+     * 清楚指定类型的所有回调
+     * @param {string} type 事件类型
+     */
+    cleanListener(type) {
+        if (type && this.event[type]) {
+            this.event[type] = [];
+        }
+    },
+    /**
+     * 需要检查环境变量，如果没有配置环境变量没办法执行后续的操作
+     * @return {bool}
+     */
+    checkSdkEnv() {
+        // 需要检查 ANDROID_HOME
+        // 需要检查 ANDROID_ROOT_HOME
+        // 需要检查 ANDROID_SDK_ROOT
+        // 需要检查 所有工具是否可用
+        // adb、sdkmanager、emulator、emulatorManager、gradle
+        // todo: 判断std.code 是否正确
+        const astd = shelljs.exec('echo $ANDROID_SDK_ROOT', {silent: true});
+        const res = astd.stdout.replace(/\s/g, '');
+        if (!res) {
+            console.log('$ANDROID_SDK_ROOT：没有配置成功');
+            return false;
+        }
+
+        const estd = shelljs.exec('emulator', {silent: true});
+        const eres = estd.stdout.replace(/\s/g, '');
+        if (!eres) {
+            console.log('没有找到命令：emulator');
+            return false;
+        }
+
+        if(!this.checkAdb()) {
+            console.log('没有找到命令：adb');
+            return false;
+        }
+
+        if(!this.checkGradle()) {
+            console.log('没有找到命令：gradle');
+            return false;
+        }
+
+        return true;
+    },
+    /**
+     * 获取可用的模拟器
+     */
+    getEmulatorList() {
+        const std = shelljs.exec('emulator -list-avds', {silent: true});
+        if (std.code == 0) {
+            return std.stdout.split(/\n/).filter((v,i) => {
+                if (v) {
+                    return true;
+                }
+                return false;
+            });
+        }
+    },
+    /**
+     * 启动android模拟器, 可能有问题
+     */
+    startEmulatorAsync(avdName) {
+        if (!avdName) {
+            return;
+        }
+        shelljs.exec(`$ANDROID_SDK_ROOT/tools/emulator -avd ${avdName} > /dev/null 2>&1 &`, {silent: true, async: true}, (code, stdout, stderr) => {
+            if (code == 0) {
+                console.log(`emulator: ${avdName} 启动成功`);
+                return true;
+            }
+            onsole.log(`emulator: ${avdName} 启动失败`);
+        });
+    },
+    /**
+     * 获取正在运行的设备列表
+     * 
+     */
+    getDevicesList() {
+        const std = shelljs.exec('adb devices', {silent: true});
+        if (std.code == 0) {
+            return std.stdout.split(/\n/).filter((v,i) => {
+                if (v) {
+                    const vs = v.split(/\s+/g);
+                    if (vs.indexOf('device') > -1) {
+                        return true;
+                    }
+                }
+                return false;
+            }).map((v) => {
+                return v.split(/\t/g)[0];
+            });
+        }
+    },
+    /**
+     * 安装apk到指定的设备
+     * @param {string} deviceId 设备id
+     * @param {string} apk 当前apk的路径
+     * @return {bool}
+     */
+    installApk(deviceId, apk) {
+        if (!deviceId || !apk) {
+            return;
+        }
+        const std = shelljs.exec(`adb -s ${deviceId} install ${apk}`, {silent: true});
+        if (std.code == 0) {
+            console.log('安装成功');
+            return true;
+        }
+        console.log('安装失败');
+        return false;
+    },
+    /**
+     * 卸载app 
+     * 人人贷的app名字：com.renrendai.finance
+     * @param {string} deviceId 设备id
+     * @param {string} id 当前app的Id
+     * @return {bool}
+     */
+    uninstallApk(deviceId, id) {
+        if (!deviceId || !id) {
+            return;
+        }
+        const std = shelljs.exec(`adb -s ${deviceId} uninstall ${id}`, {silent: true});
+        if (std.code == 0) {
+            console.log('卸载成功');
+            return true;
+        }
+        console.log('卸载失败');
+        return false;
+    },
+    /**
+     * 打开app指定的activity 
+     * com.renrendai.finance/Main
+     * @param {string} deviceId 设备id
+     * @param {string} activity 当前activity
+     * @return {bool}
+     */
+    openActivity(deviceId, activity) {
+        if (!deviceId || !activity) {
+            return;
+        }
+        const std = shelljs.exec(`adb -s ${deviceId} shell am start -n ${activity}`, {silent: true});
+        console.log('命令执行成功:', std.stderr);
+        return {
+            isError: std.stderr.indexOf('Error') > -1,
+            msg: std.stderr
+        };
+    },
+    /**
+     * 
+     * @param {string} deviceId 设备id
+     * @param {sting} activity 当前appId
+     */
+    stopApp(deviceId, appId) {
+        if (!deviceId || !appId) {
+            return;
+        }
+        const std = shelljs.exec(`adb -s ${deviceId} shell am force-stop ${appId}`, {silent: true});
+        if (std.code == 0) {
+            console.log('关闭成功');
+            return true;
+        }
+        console.log('关闭失败');
+        return false;
+    },
+    /**
+     * 给指定的app 设置权限
+     * 
+     */
+    grantPermission(deviceId, appId, permission) {
+        if (!deviceId || !appId) {
+            return;
+        }
+        const std = shelljs.exec(`adb -s ${deviceId} shell pm grant ${appId} ${permission}`, {silent: true});
+        if (std.code == 0) {
+            console.log('授权成功');
+            return true;
+        }
+        console.log('授权失败');
+        return false;
+    },
+
+
 };
 
 
