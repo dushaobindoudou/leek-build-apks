@@ -29,19 +29,19 @@ function createWSC(onOpen, onMsg, onError, onClose) {
         onOpen && onOpen(ws);
     });
 
-    ws.on('message', (msg) => {
-        console.log('message from server:', msg);
-        onMsg && onMsg(ws, msg);
+    ws.on('message', (evt) => {
+        console.log('message from server:', evt.data);
+        onMsg && onMsg(ws, evt.data);
     });
 
-    ws.on('error', (msg) => {
-        console.log('ws error:', msg);
-        onError && onError(ws, msg);
+    ws.on('error', (evt) => {
+        console.log('ws error:', evt.data);
+        onError && onError(ws, evt.data);
     });
 
-    ws.on('close', (msg) => {
-        console.log('ws close:', msg);
-        onClose && onClose(ws, msg);
+    ws.on('close', (evt) => {
+        console.log('ws close:', evt.data);
+        onClose && onClose(ws, evt.data);
     });
 
     return ws;
@@ -57,7 +57,7 @@ function sendMsg(ws, msg) {
 
 module.exports = {
     init: (ready) => {
-        createWSC((ws) => {
+        const wss = createWSC((ws) => {
             console.log('ws client start success');
             utils.addListener('buildSucc', (msg) => {
                 console.log('成功构建：', msg);
@@ -69,72 +69,73 @@ module.exports = {
             });
             console.log('websocket client start successed！');
             if (ready) {
-                ready();
+                ready(ws);
             }
-        }, (msg) => {
+        }, (ws, msg) => {
             try {
                 if (!msg) {
                     return;
                 }
+                console.log('from server:', msg);
                 const msgO = JSON.parse(msg);
                 console.log('ws server msg:', msgO);
                 switch (msgO.type) {
                 case 'install':
                     const res = utils.installApk(msgO.deviceId, msgO.apkPath);
-                    sendMsg({
+                    sendMsg(ws, {
                         type: 'install',
                         data: res,
                     });
                     break;
                 case 'startEmulator':
-                    const res = utils.startEmulatorAsync(msgO.avdName);
-                    sendMsg({
+                    utils.startEmulatorAsync(msgO.avdName);
+                    sendMsg(ws, {
                         type: 'startEmulator',
                         data: 'start emulator is runing, please use emulatorList checkout emulator start successful',
                     });
                     break;
                 case 'uninstall':
                     const resUn = utils.uninstallApk(msgO.deviceId, msgO.packageName);
-                    sendMsg({
+                    sendMsg(ws, {
                         type: 'uninstall',
                         data: resUn,
                     });
                     break;
                 case 'openActivity':
                     const resOA = utils.openActivity(msgO.deviceId, msgO.activity);
-                    sendMsg({
+                    sendMsg(ws, {
                         type: 'openActivity',
                         data: resOA,
                     });
                     break;
                 case 'stopApp':
                     const resSA = utils.stopApp(msgO.deviceId, msgO.packageName);
-                    sendMsg({
+                    sendMsg(ws, {
                         type: 'stopApp',
                         data: resSA,
                     });
                     break;
                 case 'grandPermission':
                     const resGP = utils.grantPermission(msgO.deviceId, msgO.packageName, msgO.permission);
-                    sendMsg({
+                    sendMsg(ws, {
                         type: 'grandPermission',
                         data: resGP,
                     });
                     break;
                 case 'deviceList':
-                    sendMsg({
+                    sendMsg(ws, {
                         type: 'deviceList',
                         data: utils.getDevicesList(),
                     });
                     break;
                 case 'emulatorList':
-                    sendMsg({
+                    sendMsg(ws, {
                         type: 'emulatorList',
                         data: utils.getEmulatorList(),
                     });
                     break;
                 case 'clientEnv':
-                    sendMsg({
+                    sendMsg(ws, {
                         type: 'clientEnv',
                         data: utils.checkSdkEnv(),
                     });

@@ -1,6 +1,6 @@
 {
   "name": "leek-auto-build",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "自动构建rn测试包",
   "bin": {
     "lab": "bin/index.js"

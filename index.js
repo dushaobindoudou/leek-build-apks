@@ -10,10 +10,10 @@
  * Copyright (c) renrendai 2018
  */
 
+const path = require('path');
+const childProcess = require('child_process');
 
 const utils = require('./utils');
-const autoRun = require('./autoRun');
-
 const confInfo = utils.getConfigInfo();
 
 /**
@@ -24,9 +24,51 @@ if (!confInfo) {
     return;
 }
 
-autoRun.init(() => {
-    utils.run();
-});
+// 使用新线程开启 ws server
+
+const lab = {
+    /**
+     * 开始构建apk
+     * @param {string} 构建参数
+     */
+    start: (params) => {
+        const wsServer = childProcess.fork(path.join(__dirname, './wsServer.js'));
+
+        wsServer.on('message', (msg) => {
+            if (!msg) {
+                return;
+            }
+            switch (msg.type) {
+            case 'start':
+                console.log('ws server is running');
+                break;
+            default:
+                console.log('ws server subprocess msg:', msg.type, msg.data);
+            }
+            console.log('weServer subprocess:', JSON.stringify(msg));
+        });
+
+        utils.addListener('buildSucc', (msg) => {
+            console.log('成功构建：', msg);
+            wsServer.send({
+                type: 'buildSucc',
+                curr: msg,
+                full: utils.getBuildLog(),
+            });
+        });
+
+        // 3秒后开始执行打包，这里无所谓了，仅仅单纯的想延迟执行
+        setTimeout(() => {
+            utils.run(params);
+        }, 3000);
+    },
+};
+
+// lab.start();
+
+module.exports = lab;
+
+// wsServer.send({from: 'parent'});
 
 // utils.startEmulatorAsync('Nexus_5X_API_26');
 

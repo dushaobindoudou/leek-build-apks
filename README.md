@@ -81,15 +81,11 @@ react native init介绍：
 
 
 
-
-
-
 ## 使用说明
 
 
 ### 配置环境
 首先需要配置打包环境
-
 需要安装 node js
 
 #### android
@@ -98,6 +94,8 @@ react native init介绍：
 2. 安装android sdk
 3. 安装gradle
 4. 安照官方配置
+    ANDROID_ROOT_SDK
+    
 
 
 #### ios
