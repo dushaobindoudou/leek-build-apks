@@ -24,9 +24,9 @@ if (!confInfo) {
     return;
 }
 
-// autoRun.init(() => {
-//     utils.run();
-// });
+autoRun.init(() => {
+    utils.run();
+});
 
 // utils.startEmulatorAsync('Nexus_5X_API_26');
 

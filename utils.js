@@ -541,7 +541,7 @@ const utils = {
     },
     /**
      * 需要检查环境变量，如果没有配置环境变量没办法执行后续的操作
-     * @return {bool}
+     * @return {object}
      */
     checkSdkEnv() {
         // 需要检查 ANDROID_HOME
@@ -550,69 +550,84 @@ const utils = {
         // 需要检查 所有工具是否可用
         // adb、sdkmanager、emulator、emulatorManager、gradle
         // todo: 判断std.code 是否正确
-        const astd = shelljs.exec('echo $ANDROID_SDK_ROOT', {silent: true});
+        const astd = shelljs.exec('echo $ANDROID_SDK_ROOT', { silent: true, });
         const res = astd.stdout.replace(/\s/g, '');
         if (!res) {
             console.log('$ANDROID_SDK_ROOT：没有配置成功');
-            return false;
+            return {
+                success: false,
+                msg: '[$ANDROID_SDK_ROOT] check failed',
+            };
         }
 
-        const estd = shelljs.exec('emulator', {silent: true});
+        const estd = shelljs.exec('emulator', { silent: true, });
         const eres = estd.stdout.replace(/\s/g, '');
         if (!eres) {
             console.log('没有找到命令：emulator');
-            return false;
+            return {
+                success: false,
+                msg: '[emulator] check failed',
+            };
         }
 
-        if(!this.checkAdb()) {
+        if (!this.checkAdb()) {
             console.log('没有找到命令：adb');
-            return false;
+            return {
+                success: false,
+                msg: '[adb] check failed',
+            };
         }
 
-        if(!this.checkGradle()) {
+        if (!this.checkGradle()) {
             console.log('没有找到命令：gradle');
-            return false;
+            return {
+                success: false,
+                msg: '[gradle] check failed',
+            };
         }
 
-        return true;
+        return {
+            success: true,
+        };
     },
     /**
      * 获取可用的模拟器
+     * @return {array}
      */
     getEmulatorList() {
-        const std = shelljs.exec('emulator -list-avds', {silent: true});
+        const std = shelljs.exec('emulator -list-avds', { silent: true, });
         if (std.code == 0) {
-            return std.stdout.split(/\n/).filter((v,i) => {
+            return std.stdout.split(/\n/).filter((v) => {
                 if (v) {
                     return true;
                 }
                 return false;
             });
         }
+        return [];
     },
     /**
-     * 启动android模拟器, 可能有问题
+     * 启动android模拟器, 可能有问题, 对后续结果不作保证，可以通过diviceList 查看是否启动成功
      */
     startEmulatorAsync(avdName) {
         if (!avdName) {
             return;
         }
-        shelljs.exec(`$ANDROID_SDK_ROOT/tools/emulator -avd ${avdName} > /dev/null 2>&1 &`, {silent: true, async: true}, (code, stdout, stderr) => {
+        shelljs.exec(`$ANDROID_SDK_ROOT/tools/emulator -avd ${avdName} > /dev/null 2>&1 &`, { silent: true, async: true, }, (code) => {
             if (code == 0) {
                 console.log(`emulator: ${avdName} 启动成功`);
-                return true;
             }
-            onsole.log(`emulator: ${avdName} 启动失败`);
+            console.log(`emulator: ${avdName} 启动失败`);
         });
     },
     /**
      * 获取正在运行的设备列表
-     * 
+     * @return {array}
      */
     getDevicesList() {
-        const std = shelljs.exec('adb devices', {silent: true});
+        const std = shelljs.exec('adb devices', { silent: true, });
         if (std.code == 0) {
-            return std.stdout.split(/\n/).filter((v,i) => {
+            return std.stdout.split(/\n/).filter((v) => {
                 if (v) {
                     const vs = v.split(/\s+/g);
                     if (vs.indexOf('device') > -1) {
@@ -624,6 +639,7 @@ const utils = {
                 return v.split(/\t/g)[0];
             });
         }
+        return [];
     },
     /**
      * 安装apk到指定的设备
@@ -633,9 +649,9 @@ const utils = {
      */
     installApk(deviceId, apk) {
         if (!deviceId || !apk) {
-            return;
+            return false;
         }
-        const std = shelljs.exec(`adb -s ${deviceId} install ${apk}`, {silent: true});
+        const std = shelljs.exec(`adb -s ${deviceId} install ${apk}`, { silent: true, });
         if (std.code == 0) {
             console.log('安装成功');
             return true;
@@ -644,7 +660,7 @@ const utils = {
         return false;
     },
     /**
-     * 卸载app 
+     * 卸载app
      * 人人贷的app名字：com.renrendai.finance
      * @param {string} deviceId 设备id
      * @param {string} id 当前app的Id
@@ -652,9 +668,9 @@ const utils = {
      */
     uninstallApk(deviceId, id) {
         if (!deviceId || !id) {
-            return;
+            return false;
         }
-        const std = shelljs.exec(`adb -s ${deviceId} uninstall ${id}`, {silent: true});
+        const std = shelljs.exec(`adb -s ${deviceId} uninstall ${id}`, { silent: true, });
         if (std.code == 0) {
             console.log('卸载成功');
             return true;
@@ -663,7 +679,7 @@ const utils = {
         return false;
     },
     /**
-     * 打开app指定的activity 
+     * 打开app指定的activity
      * com.renrendai.finance/Main
      * @param {string} deviceId 设备id
      * @param {string} activity 当前activity
@@ -671,25 +687,26 @@ const utils = {
      */
     openActivity(deviceId, activity) {
         if (!deviceId || !activity) {
-            return;
+            return null;
         }
-        const std = shelljs.exec(`adb -s ${deviceId} shell am start -n ${activity}`, {silent: true});
+        const std = shelljs.exec(`adb -s ${deviceId} shell am start -n ${activity}`, { silent: true, });
         console.log('命令执行成功:', std.stderr);
         return {
             isError: std.stderr.indexOf('Error') > -1,
-            msg: std.stderr
+            msg: std.stderr,
         };
     },
     /**
-     * 
+     * 退出App
      * @param {string} deviceId 设备id
      * @param {sting} activity 当前appId
+     * @return {bool}
      */
     stopApp(deviceId, appId) {
         if (!deviceId || !appId) {
-            return;
+            return false;
         }
-        const std = shelljs.exec(`adb -s ${deviceId} shell am force-stop ${appId}`, {silent: true});
+        const std = shelljs.exec(`adb -s ${deviceId} shell am force-stop ${appId}`, { silent: true, });
         if (std.code == 0) {
             console.log('关闭成功');
             return true;
@@ -699,13 +716,16 @@ const utils = {
     },
     /**
      * 给指定的app 设置权限
-     * 
+     * @param {string} deviceId 设备id
+     * @param {string} appId appId
+     * @param {string} permission 当前的权限
+     * @return {bool}
      */
     grantPermission(deviceId, appId, permission) {
         if (!deviceId || !appId) {
-            return;
+            return false;
         }
-        const std = shelljs.exec(`adb -s ${deviceId} shell pm grant ${appId} ${permission}`, {silent: true});
+        const std = shelljs.exec(`adb -s ${deviceId} shell pm grant ${appId} ${permission}`, { silent: true, });
         if (std.code == 0) {
             console.log('授权成功');
             return true;

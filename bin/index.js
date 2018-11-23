@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const minimist = require('minimist');
-
+const autoRun = require('./autoRun');
 const utils = require('../utils');
 
 const argv = process.argv;
@@ -14,4 +14,6 @@ if (argv[0] === 'sudo' || argv[0] === 'su') {
 // runParam: error、continue、rebuild
 const runParam = argObj.run || argObj.r;
 
-utils.run(runParam);
+autoRun.init(() => {
+    utils.run(runParam);
+});

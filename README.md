@@ -11,8 +11,9 @@
 
 根据配置文件自动构建指定react native 版本的 apk/ipa
 
-todo:
 自动测试
+
+生成测试报告
 
 
 ## 实现思路
@@ -38,11 +39,8 @@ react native init介绍：
 4. 执行 npm install （安装依赖）
 5. 执行 构建apk 操作 （使用gradle 构建）
 6. 将 apk 拷贝到 要发布发布的目录 （按照不同版本分类）
-
-todo:
-
 7. 自动打开模拟器，运行指定的apk
-8. 检查更新到指定的版本内容，上报结果
+8. 检查更新到指定的版本内容，模拟tinker自动更新，生成更新报告
 9. 重复7、8
 
 ## 产出
@@ -75,10 +73,11 @@ todo:
 
 当前只提供一个命令集合，让服务端控制怎么执行，使用websockt来进行前后端通信
 
-1. APK打包完成，上报当前的apk信息
+1. APK打包完成，上报当前的apk信息，当前的工作环境
 2. 安装apk
-3. 打开某个activity
-4. 卸载apk
+3. 设置App的权限
+4. 打开某个activity
+5. 卸载apk
 
 
 
@@ -106,7 +105,6 @@ todo:
 todo
 
 
-
 ### 安装工具
 npm install -g leek-auto-build 
 

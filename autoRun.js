@@ -57,7 +57,7 @@ function sendMsg(ws, msg) {
 
 module.exports = {
     init: (ready) => {
-        const wsc = createWSC((ws) => {
+        createWSC((ws) => {
             console.log('ws client start success');
             utils.addListener('buildSucc', (msg) => {
                 console.log('成功构建：', msg);
@@ -79,36 +79,43 @@ module.exports = {
                 const msgO = JSON.parse(msg);
                 console.log('ws server msg:', msgO);
                 switch (msgO.type) {
-                case 'install': 
+                case 'install':
                     const res = utils.installApk(msgO.deviceId, msgO.apkPath);
                     sendMsg({
                         type: 'install',
                         data: res,
                     });
                     break;
+                case 'startEmulator':
+                    const res = utils.startEmulatorAsync(msgO.avdName);
+                    sendMsg({
+                        type: 'startEmulator',
+                        data: 'start emulator is runing, please use emulatorList checkout emulator start successful',
+                    });
+                    break;
                 case 'uninstall':
-                    const resUn = utils.uninstallApk(msgO.deviceId, msg0.packageName);
+                    const resUn = utils.uninstallApk(msgO.deviceId, msgO.packageName);
                     sendMsg({
                         type: 'uninstall',
                         data: resUn,
                     });
                     break;
                 case 'openActivity':
-                    const resOA = utils.openActivity(msgO.deviceId, msg0.activity);
+                    const resOA = utils.openActivity(msgO.deviceId, msgO.activity);
                     sendMsg({
                         type: 'openActivity',
                         data: resOA,
                     });
                     break;
                 case 'stopApp':
-                    const resSA = utils.stopApp(msgO.deviceId, msg0.packageName);
+                    const resSA = utils.stopApp(msgO.deviceId, msgO.packageName);
                     sendMsg({
                         type: 'stopApp',
                         data: resSA,
                     });
                     break;
                 case 'grandPermission':
-                    const resGP = utils.grantPermission(msgO.deviceId, msg0.packageName, msg0.permission);
+                    const resGP = utils.grantPermission(msgO.deviceId, msgO.packageName, msgO.permission);
                     sendMsg({
                         type: 'grandPermission',
                         data: resGP,
