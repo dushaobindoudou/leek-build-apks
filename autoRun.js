@@ -79,7 +79,7 @@ module.exports = {
                 const msgO = JSON.parse(msg);
                 console.log('ws server msg:', msgO);
                 switch (msgO.type) {
-                case 'install':
+                case 'install': 
                     const res = utils.installApk(msgO.deviceId, msgO.apkPath);
                     sendMsg({
                         type: 'install',
@@ -87,31 +87,31 @@ module.exports = {
                     });
                     break;
                 case 'uninstall':
-                    const res = utils.uninstallApk(msgO.deviceId, msg0.packageName);
+                    const resUn = utils.uninstallApk(msgO.deviceId, msg0.packageName);
                     sendMsg({
                         type: 'uninstall',
-                        data: res,
+                        data: resUn,
                     });
                     break;
                 case 'openActivity':
-                    const res = utils.openActivity(msgO.deviceId, msg0.activity);
+                    const resOA = utils.openActivity(msgO.deviceId, msg0.activity);
                     sendMsg({
                         type: 'openActivity',
-                        data: res,
+                        data: resOA,
                     });
                     break;
                 case 'stopApp':
-                    const res = utils.stopApp(msgO.deviceId, msg0.packageName);
+                    const resSA = utils.stopApp(msgO.deviceId, msg0.packageName);
                     sendMsg({
                         type: 'stopApp',
-                        data: res,
+                        data: resSA,
                     });
                     break;
                 case 'grandPermission':
-                    const res = utils.grantPermission(msgO.deviceId, msg0.packageName, msg0.permission);
+                    const resGP = utils.grantPermission(msgO.deviceId, msg0.packageName, msg0.permission);
                     sendMsg({
                         type: 'grandPermission',
-                        data: res,
+                        data: resGP,
                     });
                     break;
                 case 'deviceList':
@@ -120,13 +120,13 @@ module.exports = {
                         data: utils.getDevicesList(),
                     });
                     break;
-                case 'emulatorList': 
+                case 'emulatorList':
                     sendMsg({
                         type: 'emulatorList',
                         data: utils.getEmulatorList(),
                     });
                     break;
-                case 'clientEnv' :
+                case 'clientEnv':
                     sendMsg({
                         type: 'clientEnv',
                         data: utils.checkSdkEnv(),
